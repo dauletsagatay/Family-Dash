@@ -8,18 +8,22 @@ import { Box, Typography, Divider, useTheme } from "@mui/material";
 import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const UserWidget = ({ userId, picturePath }) => {
+const UserWidget = ({ userId, picturePath, isProfile }) => {
+  const dispatch = useDispatch();
   const [user, setUser] = useState(null);
+  const [likesCount, setLikesCount] = useState();
   const { palette } = useTheme();
   const navigate = useNavigate();
   const token = useSelector((state) => state.token);
+  const { _id } = useSelector((state) => state.user);
   const dark = palette.neutral.dark;
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
+  const isMe = Boolean(_id === userId);
 
   const getUser = async () => {
     const response = await fetch(
@@ -30,11 +34,29 @@ const UserWidget = ({ userId, picturePath }) => {
       }
     );
     const data = await response.json();
-    setUser(data);
+    dispatch(setUser(data));
+  };
+
+  const getUserPostsLikes = async () => {
+    const response = await fetch(
+      `${process.env.REACT_APP_BASE_URL}/posts/${userId}/posts`,
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    const data = await response.json();
+    let cnt = 0;
+    data.map(({ likes }) => {
+      cnt = cnt + Object.keys(likes).length;
+    });
+
+    setLikesCount(cnt);
   };
 
   useEffect(() => {
     getUser();
+    getUserPostsLikes();
   }, []); //eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) {
@@ -54,11 +76,7 @@ const UserWidget = ({ userId, picturePath }) => {
   return (
     <WidgetWrapper>
       {/* FIRST ROW */}
-      <FlexBetween
-        gap="0.5rem"
-        pb="1.1rem"
-        onClick={() => navigate(`/profile/${userId}`)}
-      >
+      <FlexBetween gap="0.5rem" pb="1.1rem">
         <FlexBetween gap="1rem">
           <UserImage image={picturePath} />
           <Box>
@@ -69,13 +87,14 @@ const UserWidget = ({ userId, picturePath }) => {
               sx={{
                 "&:hover": { color: palette.primary.light, cursor: "pointer" },
               }}
+              onClick={() => navigate(`/profile/${userId}`)}
             >
               {firstName} {lastName}
             </Typography>
             <Typography color={medium}>{friends.length} friends</Typography>
           </Box>
         </FlexBetween>
-        <ManageAccountsOutlined />
+        {!isProfile && isMe && <ManageAccountsOutlined />}
       </FlexBetween>
 
       <Divider />
@@ -96,24 +115,24 @@ const UserWidget = ({ userId, picturePath }) => {
 
       {/* THIRD ROW */}
       <Box p="1rem 0">
-        <FlexBetween mb="0.5rem">
+        {/* <FlexBetween mb="0.5rem">
           <Typography color={medium}>Who's viewed your profile</Typography>
           <Typography color={main} fontWeight="500">
             {viewedProfile}
           </Typography>
-        </FlexBetween>
+        </FlexBetween> */}
         <FlexBetween>
-          <Typography color={medium}>Impressions of your post</Typography>
+          <Typography color={medium}>Impressions of your posts</Typography>
           <Typography color={main} fontWeight="500">
-            {impressions}
+            {likesCount}
           </Typography>
         </FlexBetween>
       </Box>
 
-      <Divider />
+      {/* <Divider /> */}
 
       {/* FOURTH ROW */}
-      <Box p="1rem 0">
+      {/* <Box p="1rem 0">
         <Typography fontSize="1rem" color={main} fontWeight="500" mb="1rem">
           Social Profiles
         </Typography>
@@ -128,7 +147,7 @@ const UserWidget = ({ userId, picturePath }) => {
               <Typography color={medium}>Social Network</Typography>
             </Box>
           </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
+          {!isProfile && <EditOutlined sx={{ color: main }} />}
         </FlexBetween>
 
         <FlexBetween gap="1rem">
@@ -141,9 +160,9 @@ const UserWidget = ({ userId, picturePath }) => {
               <Typography color={medium}>Network Platform</Typography>
             </Box>
           </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
+          {!isProfile && <EditOutlined sx={{ color: main }} />}
         </FlexBetween>
-      </Box>
+      </Box> */}
     </WidgetWrapper>
   );
 };

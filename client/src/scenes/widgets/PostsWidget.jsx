@@ -43,6 +43,14 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  let getAllLikes = (posts) => {
+    let cnt = 0;
+    posts.map(({ likes }) => {
+      cnt = cnt + Object.keys(likes).length;
+    });
+    return cnt;
+  };
+
   return (
     <>
       {posts.map(
